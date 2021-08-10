@@ -1,14 +1,22 @@
 package com.basiliscoderoko.appescritorio;
 
 import com.mysql.cj.util.StringUtils;
+import com.toedter.calendar.JDateChooser;
 import java.awt.HeadlessException;
 import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
@@ -17,15 +25,27 @@ import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableColumnModel;
+import javax.swing.table.TableModel;
+import org.apache.poi.hssf.usermodel.HSSFCell;
+import org.apache.poi.hssf.usermodel.HSSFCellStyle;
+import org.apache.poi.hssf.usermodel.HSSFFont;
+import org.apache.poi.hssf.usermodel.HSSFRow;
+import org.apache.poi.hssf.usermodel.HSSFSheet;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 
 public class MaestrosForm extends javax.swing.JInternalFrame {
 
     Connection con;
     PreparedStatement ps;
     ResultSet rs;
+    Boolean isEditarCrear = false;
+    SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
     DefaultListModel modelPackHas = new DefaultListModel();
     Map<Integer, Integer> idsAndQuantities = new HashMap<>();
     Map<Integer, String> articleMapper = new HashMap<>();
+    private static final String FILE_NAME = "Informe_Ventas_packs.xls";
+    private static final String RUTA_EXCEL = System.getProperty("user.home") + "\\Desktop\\" + FILE_NAME;
 
     public MaestrosForm() {
         initComponents();
@@ -113,6 +133,21 @@ public class MaestrosForm extends javax.swing.JInternalFrame {
         txtNombrePack = new javax.swing.JTextField();
         jLabel16 = new javax.swing.JLabel();
         txtPrecioPack = new javax.swing.JTextField();
+        jPanel9 = new javax.swing.JPanel();
+        jPanel10 = new javax.swing.JPanel();
+        jLabel2 = new javax.swing.JLabel();
+        btnBuscaInfoVentPacks = new javax.swing.JButton();
+        jLabel17 = new javax.swing.JLabel();
+        jDateInfoVentHasta = new com.toedter.calendar.JDateChooser();
+        jDateInfoVentDesde = new com.toedter.calendar.JDateChooser();
+        jScrollPane5 = new javax.swing.JScrollPane();
+        GrillaInfoVentaPacks = new javax.swing.JTable();
+        jLabel14 = new javax.swing.JLabel();
+        jLabel18 = new javax.swing.JLabel();
+        txtCantTotalPacks = new javax.swing.JTextField();
+        txtValorTotalPacks = new javax.swing.JTextField();
+        jLabel19 = new javax.swing.JLabel();
+        btnExpImpVentPack = new javax.swing.JButton();
 
         setClosable(true);
         setIconifiable(true);
@@ -212,11 +247,6 @@ public class MaestrosForm extends javax.swing.JInternalFrame {
 
         BtnUserEditar.setText("Editar");
         BtnUserEditar.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
-        BtnUserEditar.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                BtnUserEditarActionPerformed(evt);
-            }
-        });
 
         BtnUserDesactivar.setText("Desactivar");
         BtnUserDesactivar.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
@@ -257,7 +287,7 @@ public class MaestrosForm extends javax.swing.JInternalFrame {
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(BtnUserEditar)
                     .addComponent(BtnUserDesactivar))
-                .addContainerGap(116, Short.MAX_VALUE))
+                .addContainerGap(173, Short.MAX_VALUE))
         );
 
         jTabbedPane2.addTab("Usuarios", jPanel3);
@@ -402,7 +432,7 @@ public class MaestrosForm extends javax.swing.JInternalFrame {
                 .addGroup(jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(BtnRRSSEditar)
                     .addComponent(BtnRRSSDesactivar))
-                .addContainerGap(105, Short.MAX_VALUE))
+                .addContainerGap(162, Short.MAX_VALUE))
         );
 
         jTabbedPane2.addTab("RRSS", jPanel6);
@@ -496,6 +526,7 @@ public class MaestrosForm extends javax.swing.JInternalFrame {
         if (GrillaComunas.getColumnModel().getColumnCount() > 0) {
             GrillaComunas.getColumnModel().getColumn(0).setResizable(false);
             GrillaComunas.getColumnModel().getColumn(1).setResizable(false);
+            GrillaComunas.getColumnModel().getColumn(2).setResizable(false);
         }
 
         BtnEditarComuna.setText("Editar");
@@ -519,11 +550,6 @@ public class MaestrosForm extends javax.swing.JInternalFrame {
 
         jLabel12.setText("Buscar:");
 
-        txtBuscarComuna.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                txtBuscarComunaActionPerformed(evt);
-            }
-        });
         txtBuscarComuna.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyTyped(java.awt.event.KeyEvent evt) {
                 txtBuscarComunaKeyTyped(evt);
@@ -568,7 +594,7 @@ public class MaestrosForm extends javax.swing.JInternalFrame {
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(BtnDesactivarComuna)
                     .addComponent(BtnEditarComuna))
-                .addContainerGap(121, Short.MAX_VALUE))
+                .addContainerGap(178, Short.MAX_VALUE))
         );
 
         jTabbedPane2.addTab("Comunas", jPanel1);
@@ -675,7 +701,7 @@ public class MaestrosForm extends javax.swing.JInternalFrame {
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(BtnBcoeditar)
                     .addComponent(BtnBcoDesactivar))
-                .addContainerGap(134, Short.MAX_VALUE))
+                .addContainerGap(191, Short.MAX_VALUE))
         );
 
         jTabbedPane2.addTab("Bancos", jPanel2);
@@ -826,8 +852,8 @@ public class MaestrosForm extends javax.swing.JInternalFrame {
             .addGroup(jPanel11Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel11Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane10, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 632, Short.MAX_VALUE)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel11Layout.createSequentialGroup()
+                        .addGap(8, 8, 8)
                         .addComponent(jLabel15)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(txtNombrePack, javax.swing.GroupLayout.PREFERRED_SIZE, 113, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -835,27 +861,26 @@ public class MaestrosForm extends javax.swing.JInternalFrame {
                         .addComponent(jLabel16)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(txtPrecioPack, javax.swing.GroupLayout.PREFERRED_SIZE, 113, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(62, 62, 62))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel11Layout.createSequentialGroup()
+                        .addGap(42, 42, 42))
+                    .addComponent(jScrollPane10, javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addGroup(jPanel11Layout.createSequentialGroup()
                         .addComponent(jScrollPane9, javax.swing.GroupLayout.PREFERRED_SIZE, 240, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(jPanel11Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(jPanel11Layout.createSequentialGroup()
-                                .addGroup(jPanel11Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(btnQuitarArtPack, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                    .addComponent(btnAgregarArtPack, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                                .addGap(8, 8, 8))
+                            .addGroup(jPanel11Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                .addComponent(btnQuitarArtPack, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(btnAgregarArtPack, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                             .addGroup(jPanel11Layout.createSequentialGroup()
                                 .addGap(31, 31, 31)
                                 .addComponent(jLabel22)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(txtCantArtPack, javax.swing.GroupLayout.PREFERRED_SIZE, 43, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 21, Short.MAX_VALUE)))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 9, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addGap(12, 12, 12)
                         .addGroup(jPanel11Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jScrollPane8, javax.swing.GroupLayout.PREFERRED_SIZE, 240, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(btnCrearPack, javax.swing.GroupLayout.PREFERRED_SIZE, 93, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel11Layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
+                    .addGroup(jPanel11Layout.createSequentialGroup()
                         .addGroup(jPanel11Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel11Layout.createSequentialGroup()
                                 .addComponent(btnEditarPack, javax.swing.GroupLayout.PREFERRED_SIZE, 96, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -863,43 +888,42 @@ public class MaestrosForm extends javax.swing.JInternalFrame {
                                 .addComponent(btnDesactPack, javax.swing.GroupLayout.PREFERRED_SIZE, 97, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel11Layout.createSequentialGroup()
                                 .addComponent(jLabel23, javax.swing.GroupLayout.PREFERRED_SIZE, 116, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(88, 88, 88)
-                                .addComponent(jLabel24)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(txtBuscarPack, javax.swing.GroupLayout.PREFERRED_SIZE, 132, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addComponent(BtnCancelarPack, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 93, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                                .addGap(260, 260, 260))
+                            .addComponent(BtnCancelarPack, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 93, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jLabel24)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(txtBuscarPack, javax.swing.GroupLayout.PREFERRED_SIZE, 132, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
         jPanel11Layout.setVerticalGroup(
             jPanel11Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel11Layout.createSequentialGroup()
-                .addGap(8, 8, 8)
-                .addGroup(jPanel11Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel15)
-                    .addComponent(txtNombrePack, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel16)
-                    .addComponent(txtPrecioPack, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(19, 19, 19)
+                .addGroup(jPanel11Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel11Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(jLabel15)
+                        .addComponent(txtNombrePack, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(jPanel11Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(jLabel16)
+                        .addComponent(txtPrecioPack, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addGap(28, 28, 28)
                 .addGroup(jPanel11Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel11Layout.createSequentialGroup()
-                        .addGroup(jPanel11Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(jPanel11Layout.createSequentialGroup()
-                                .addGap(15, 15, 15)
-                                .addComponent(btnAgregarArtPack)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addGroup(jPanel11Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                    .addComponent(jLabel22)
-                                    .addComponent(txtCantArtPack))
-                                .addGap(11, 11, 11)
-                                .addComponent(btnQuitarArtPack))
-                            .addComponent(jScrollPane8, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 108, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(btnAgregarArtPack)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addGroup(jPanel11Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(BtnCancelarPack)
-                            .addComponent(btnCrearPack)))
-                    .addGroup(jPanel11Layout.createSequentialGroup()
-                        .addGap(1, 1, 1)
-                        .addComponent(jScrollPane9, javax.swing.GroupLayout.PREFERRED_SIZE, 109, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addGap(23, 23, 23)
+                            .addComponent(jLabel22)
+                            .addComponent(txtCantArtPack))
+                        .addGap(11, 11, 11)
+                        .addComponent(btnQuitarArtPack))
+                    .addComponent(jScrollPane9, javax.swing.GroupLayout.PREFERRED_SIZE, 109, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jScrollPane8, javax.swing.GroupLayout.PREFERRED_SIZE, 108, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel11Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(BtnCancelarPack)
+                    .addComponent(btnCrearPack))
+                .addGap(35, 35, 35)
                 .addGroup(jPanel11Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel23)
                     .addComponent(txtBuscarPack, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -910,10 +934,190 @@ public class MaestrosForm extends javax.swing.JInternalFrame {
                 .addGroup(jPanel11Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(btnDesactPack)
                     .addComponent(btnEditarPack))
-                .addGap(19, 19, 19))
+                .addGap(37, 37, 37))
         );
 
         jTabbedPane2.addTab("Pack", jPanel11);
+
+        jPanel10.setBorder(javax.swing.BorderFactory.createTitledBorder("Busqueda"));
+
+        jLabel2.setText("Desde:");
+
+        btnBuscaInfoVentPacks.setText("Buscar");
+        btnBuscaInfoVentPacks.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
+        btnBuscaInfoVentPacks.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnBuscaInfoVentPacksActionPerformed(evt);
+            }
+        });
+
+        jLabel17.setText("Hasta:");
+
+        jDateInfoVentHasta.setDateFormatString("yyyy-MM-dd");
+
+        jDateInfoVentDesde.setDateFormatString("yyyy-MM-dd");
+        jDateInfoVentDesde.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyTyped(java.awt.event.KeyEvent evt) {
+                jDateInfoVentDesdeKeyTyped(evt);
+            }
+        });
+
+        javax.swing.GroupLayout jPanel10Layout = new javax.swing.GroupLayout(jPanel10);
+        jPanel10.setLayout(jPanel10Layout);
+        jPanel10Layout.setHorizontalGroup(
+            jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel10Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel10Layout.createSequentialGroup()
+                        .addComponent(jLabel2)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jDateInfoVentDesde, javax.swing.GroupLayout.PREFERRED_SIZE, 162, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(jPanel10Layout.createSequentialGroup()
+                        .addComponent(jLabel17)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jDateInfoVentHasta, javax.swing.GroupLayout.PREFERRED_SIZE, 162, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel10Layout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(btnBuscaInfoVentPacks, javax.swing.GroupLayout.PREFERRED_SIZE, 92, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(199, 199, 199))
+        );
+        jPanel10Layout.setVerticalGroup(
+            jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel10Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jDateInfoVentDesde, javax.swing.GroupLayout.PREFERRED_SIZE, 29, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel2))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(btnBuscaInfoVentPacks)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 12, Short.MAX_VALUE)
+                .addGroup(jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jDateInfoVentHasta, javax.swing.GroupLayout.PREFERRED_SIZE, 29, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel17))
+                .addGap(22, 22, 22))
+        );
+
+        GrillaInfoVentaPacks.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+
+            },
+            new String [] {
+                "Pack", "Cantidad", "Valor"
+            }
+        ) {
+            Class[] types = new Class [] {
+                java.lang.String.class, java.lang.String.class, java.lang.Double.class
+            };
+            boolean[] canEdit = new boolean [] {
+                false, false, false
+            };
+
+            public Class getColumnClass(int columnIndex) {
+                return types [columnIndex];
+            }
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
+        GrillaInfoVentaPacks.setColumnSelectionAllowed(true);
+        GrillaInfoVentaPacks.getTableHeader().setReorderingAllowed(false);
+        GrillaInfoVentaPacks.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                GrillaInfoVentaPacksMouseClicked(evt);
+            }
+        });
+        jScrollPane5.setViewportView(GrillaInfoVentaPacks);
+        GrillaInfoVentaPacks.getColumnModel().getSelectionModel().setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        if (GrillaInfoVentaPacks.getColumnModel().getColumnCount() > 0) {
+            GrillaInfoVentaPacks.getColumnModel().getColumn(0).setResizable(false);
+            GrillaInfoVentaPacks.getColumnModel().getColumn(1).setResizable(false);
+            GrillaInfoVentaPacks.getColumnModel().getColumn(2).setResizable(false);
+        }
+
+        jLabel14.setFont(new java.awt.Font("Times New Roman", 1, 18)); // NOI18N
+        jLabel14.setText("INFORME VENTAS PACK'S");
+
+        jLabel18.setText("Cantidad Total:");
+
+        txtCantTotalPacks.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                txtCantTotalPacksActionPerformed(evt);
+            }
+        });
+        txtCantTotalPacks.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyTyped(java.awt.event.KeyEvent evt) {
+                txtCantTotalPacksKeyTyped(evt);
+            }
+        });
+
+        txtValorTotalPacks.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyTyped(java.awt.event.KeyEvent evt) {
+                txtValorTotalPacksKeyTyped(evt);
+            }
+        });
+
+        jLabel19.setText("Valor Total:");
+
+        btnExpImpVentPack.setText("Exportar/Importar");
+        btnExpImpVentPack.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
+        btnExpImpVentPack.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnExpImpVentPackActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout jPanel9Layout = new javax.swing.GroupLayout(jPanel9);
+        jPanel9.setLayout(jPanel9Layout);
+        jPanel9Layout.setHorizontalGroup(
+            jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel9Layout.createSequentialGroup()
+                .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addGroup(jPanel9Layout.createSequentialGroup()
+                        .addGap(198, 198, 198)
+                        .addComponent(jLabel14))
+                    .addGroup(jPanel9Layout.createSequentialGroup()
+                        .addGap(133, 133, 133)
+                        .addComponent(jLabel18)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(txtCantTotalPacks, javax.swing.GroupLayout.PREFERRED_SIZE, 81, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jLabel19)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(txtValorTotalPacks, javax.swing.GroupLayout.PREFERRED_SIZE, 81, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(jPanel9Layout.createSequentialGroup()
+                        .addGap(21, 21, 21)
+                        .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(jPanel10, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(jScrollPane5, javax.swing.GroupLayout.DEFAULT_SIZE, 616, Short.MAX_VALUE)))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel9Layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(btnExpImpVentPack, javax.swing.GroupLayout.PREFERRED_SIZE, 130, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(27, Short.MAX_VALUE))
+        );
+        jPanel9Layout.setVerticalGroup(
+            jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel9Layout.createSequentialGroup()
+                .addGap(25, 25, 25)
+                .addComponent(jPanel10, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(25, 25, 25)
+                .addComponent(jLabel14)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jScrollPane5, javax.swing.GroupLayout.PREFERRED_SIZE, 93, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel18)
+                    .addComponent(txtCantTotalPacks, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel19)
+                    .addComponent(txtValorTotalPacks, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 36, Short.MAX_VALUE)
+                .addComponent(btnExpImpVentPack, javax.swing.GroupLayout.PREFERRED_SIZE, 67, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(25, 25, 25))
+        );
+
+        jTabbedPane2.addTab("Informe de Venta de Packs", jPanel9);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -1020,14 +1224,73 @@ public class MaestrosForm extends javax.swing.JInternalFrame {
                 txtPrecioPack.setText(EMPTY);
                 btnEditarPack.setEnabled(false);
                 btnDesactPack.setVisible(false);
-                cleanArticleForm();
                 refreshTablePack();
+                cleanArticleForm();
             }
         } catch (SQLException ex) {
             Logger.getLogger(MaestrosForm.class.getName()).log(Level.SEVERE, null, ex);
             JOptionPane.showMessageDialog(null, ex.getMessage(), null, JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_btnEditarPackActionPerformed
+
+    private void GrillaPacksMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_GrillaPacksMouseReleased
+        int id = GrillaPacks.getSelectedRow();
+        int packId = Integer.parseInt(GrillaPacks.getValueAt(id, 0).toString());
+        String namePack = GrillaPacks.getValueAt(id, 1).toString();
+        String price = GrillaPacks.getValueAt(id, 2).toString();
+        if (evt.getClickCount() == 1 && GrillaPacks.getSelectedRow() != -1) {
+            boolean status = (boolean) GrillaPacks.getValueAt(id, 4);
+            int dialogResult = JOptionPane.showConfirmDialog(null, """
+                ¿Desea editar el pack seleccionado?""",
+                    "Warning", JOptionPane.YES_NO_OPTION);
+            if (dialogResult == JOptionPane.YES_OPTION) {
+                txtBuscarPack.setText(EMPTY);
+                txtNombrePack.setText(namePack);
+                txtPrecioPack.setText(price);
+                btnDesactPack.setVisible(true);
+                btnDesactPack.setText(getActivateDeactivateName(status));
+                btnDesactPack.setEnabled(true);
+                btnEditarPack.setEnabled(true);
+                btnCrearPack.setEnabled(false);
+                isEditarCrear = true;
+                getHasPack(packId);
+                /*int id = GrillaPacks.getSelectedRow();
+                int packId = Integer.parseInt(GrillaPacks.getValueAt(id, 0).toString());
+                String namePack = GrillaPacks.getValueAt(id, 1).toString();
+                String price = GrillaPacks.getValueAt(id, 2).toString();
+                if (evt.getClickCount() == 1 && GrillaPacks.getSelectedRow() != -1) {
+                    boolean status = (boolean) GrillaPacks.getValueAt(id, 4);
+                    txtBuscarPack.setText(EMPTY);
+                    txtNombrePack.setText(namePack);
+                    txtPrecioPack.setText(price);
+                    btnDesactPack.setVisible(true);
+                    btnDesactPack.setText(getActivateDeactivateName(status));
+                    btnDesactPack.setEnabled(true);
+                    btnEditarPack.setEnabled(false);
+                    btnCrearPack.setEnabled(false);
+                    getHasPack(packId);
+                }
+
+                if (evt.getClickCount() == 2 && GrillaPacks.getSelectedRow() != -1) {
+                    int dialogResult = JOptionPane.showConfirmDialog(null, """
+                        Los artículos asociados al pack serán eliminados
+                        ¿Desea editar el registro seleccionado?""",
+                        "Warning", JOptionPane.YES_NO_OPTION);
+                    if (dialogResult == JOptionPane.YES_OPTION) {
+
+                        deletePackHas();
+                        getHasPack(packId);
+                        txtBuscarPack.setText(EMPTY);
+                        txtNombrePack.setText(namePack);
+                        txtPrecioPack.setText(price);
+                        btnDesactPack.setVisible(false);
+                        btnEditarPack.setEnabled(true);
+                        btnCrearPack.setEnabled(false);
+                    }
+                }*/
+            }
+        }
+    }//GEN-LAST:event_GrillaPacksMouseReleased
 
     private void GrillaPacks(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_GrillaPacks
         int id = GrillaPacks.getSelectedRow();
@@ -1036,33 +1299,37 @@ public class MaestrosForm extends javax.swing.JInternalFrame {
         String price = GrillaPacks.getValueAt(id, 2).toString();
         if (evt.getClickCount() == 1 && GrillaPacks.getSelectedRow() != -1) {
             boolean status = (boolean) GrillaPacks.getValueAt(id, 4);
-            txtBuscarPack.setText(EMPTY);
-            txtNombrePack.setText(namePack);
-            txtPrecioPack.setText(price);
-            btnDesactPack.setVisible(true);
-            btnDesactPack.setText(getActivateDeactivateName(status));
-            btnDesactPack.setEnabled(true);
-            btnEditarPack.setEnabled(false);
-            btnCrearPack.setEnabled(false);
-            getHasPack(packId);
-        }
-
-        if (evt.getClickCount() == 2 && GrillaPacks.getSelectedRow() != -1) {
             int dialogResult = JOptionPane.showConfirmDialog(null, """
-                                                                   Los artículos asociados al pack serán eliminados
-                                                                   ¿Desea editar el registro seleccionado?""",
+                ¿Desea editar el pack seleccionado?""",
                     "Warning", JOptionPane.YES_NO_OPTION);
             if (dialogResult == JOptionPane.YES_OPTION) {
-
-                deletePackHas();
-                getHasPack(packId);
                 txtBuscarPack.setText(EMPTY);
                 txtNombrePack.setText(namePack);
                 txtPrecioPack.setText(price);
-                btnDesactPack.setVisible(false);
+                btnDesactPack.setVisible(true);
+                btnDesactPack.setText(getActivateDeactivateName(status));
+                btnDesactPack.setEnabled(true);
                 btnEditarPack.setEnabled(true);
                 btnCrearPack.setEnabled(false);
+                isEditarCrear = true;
+                getHasPack(packId);
             }
+
+            /*if (evt.getClickCount() == 2 && GrillaPacks.getSelectedRow() != -1) {
+                int dialogResult = JOptionPane.showConfirmDialog(null, """
+                    ¿Desea editar el pack seleccionado?""",
+                    "Warning", JOptionPane.YES_NO_OPTION);
+                if (dialogResult == JOptionPane.YES_OPTION) {
+                    //deleteARtPackHas();
+                    getHasPack(packId);
+                    txtBuscarPack.setText(EMPTY);
+                    txtNombrePack.setText(namePack);
+                    txtPrecioPack.setText(price);
+                    btnDesactPack.setVisible(false);
+                    btnEditarPack.setEnabled(true);
+                    btnCrearPack.setEnabled(false);
+                }
+            }*/
         }
     }//GEN-LAST:event_GrillaPacks
 
@@ -1092,6 +1359,28 @@ public class MaestrosForm extends javax.swing.JInternalFrame {
         }
     }//GEN-LAST:event_txtCantArtPackKeyTyped
 
+    private void btnQuitarArtPackActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnQuitarArtPackActionPerformed
+        //quitarRowhasPack();
+        final int selectedIndex = jListPckHas.getSelectedIndex();
+        int id = GrillaPacks.getSelectedRow();
+        int packId = Integer.parseInt(GrillaPacks.getValueAt(id, 0).toString());
+        final String selectedArticle = jListPckHas.getSelectedValue();
+        String article = selectedArticle.substring(0, selectedArticle.indexOf("-")).trim();
+        if (isEditarCrear) {
+            articleMapper.entrySet().stream().filter(f -> article.equals(f.getValue())).forEach(art -> {
+                deleteArtPackHas(art.getKey(), packId);
+            });
+            refreshTablePack();
+            getHasPack(packId);
+            btnQuitarArtPack.setEnabled(false);
+            return;
+        }
+        idsAndQuantities.remove(selectedArticle, selectedArticle);
+        modelPackHas.removeElementAt(selectedIndex);
+        jListPckHas.setModel(modelPackHas);
+        btnQuitarArtPack.setEnabled(false);
+    }//GEN-LAST:event_btnQuitarArtPackActionPerformed
+
     private void btnAgregarArtPackActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAgregarArtPackActionPerformed
         String articulo = jListPckArt.getSelectedValue();
         String canArt = txtCantArtPack.getText();
@@ -1103,13 +1392,25 @@ public class MaestrosForm extends javax.swing.JInternalFrame {
             JOptionPane.showMessageDialog(null, "El artículo " + articulo + " ya ha sido agregado al pack");
             return;
         }
-        articleMapper.entrySet().stream().filter(f -> articulo.equals(f.getValue())).forEach(article -> {
-            idsAndQuantities.put(article.getKey(), Integer.parseInt(txtCantArtPack.getText()));
-        });
-        modelPackHas.addElement(articulo);
-        jListPckHas.setModel(modelPackHas);
-        btnAgregarArtPack.setEnabled(false);
-        txtCantArtPack.setText(EMPTY);
+        if (isEditarCrear) {
+            int artId = GrillaPacks.getSelectedRow();
+            int packId = Integer.parseInt(GrillaPacks.getValueAt(artId, 0).toString());
+            articleMapper.entrySet().stream().filter(f -> articulo.equals(f.getValue())).forEach(art -> {
+                insertHasPackEdit(art.getKey(), packId);
+            });
+            getHasPack(packId);
+            cleanArticleForm();
+            refreshTablePack();
+            isEditarCrear = false;
+        } else {
+            articleMapper.entrySet().stream().filter(f -> articulo.equals(f.getValue())).forEach(article -> {
+                idsAndQuantities.put(article.getKey(), Integer.parseInt(txtCantArtPack.getText()));
+            });
+            modelPackHas.addElement(articulo);
+            jListPckHas.setModel(modelPackHas);
+            btnAgregarArtPack.setEnabled(false);
+            txtCantArtPack.setText(EMPTY);
+        }
     }//GEN-LAST:event_btnAgregarArtPackActionPerformed
 
     private void jListPckArtMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jListPckArtMouseClicked
@@ -1117,12 +1418,19 @@ public class MaestrosForm extends javax.swing.JInternalFrame {
         btnQuitarArtPack.setEnabled(false);
     }//GEN-LAST:event_jListPckArtMouseClicked
 
+    private void jListPckHasMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jListPckHasMouseClicked
+        btnQuitarArtPack.setEnabled(true);
+        btnAgregarArtPack.setEnabled(false);
+    }//GEN-LAST:event_jListPckHasMouseClicked
+
     private void BtnCancelarPackActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_BtnCancelarPackActionPerformed
         txtNombrePack.setText(EMPTY);
         txtPrecioPack.setText(EMPTY);
         txtBuscarPack.setText(EMPTY);
         txtCantArtPack.setText(EMPTY);
         btnDesactPack.setVisible(false);
+        btnCrearPack.setEnabled(true);
+        btnEditarPack.setEnabled(false);
         getPack();
     }//GEN-LAST:event_BtnCancelarPackActionPerformed
 
@@ -1140,68 +1448,6 @@ public class MaestrosForm extends javax.swing.JInternalFrame {
         cleanArticleForm();
         refreshTablePack();
     }//GEN-LAST:event_btnCrearPackActionPerformed
-
-    private boolean agregaArtPack() throws HeadlessException {
-        if (idsAndQuantities.isEmpty()) {
-            JOptionPane.showMessageDialog(null, "Debe agregar artículos al pack");
-            return true;
-        }
-        return false;
-    }
-
-    private void insertHasPack(int packId) {
-        idsAndQuantities.entrySet().forEach(map -> {
-            try {
-                con = ConnectionMysql.getConnection();
-                ps = con.prepareStatement("INSERT INTO dreamgifts.pack_has_articulo (PCK_ID_PACK, ART_ID_ARTICULO, CANTIDAD) VALUES (?, ?, ?)");
-                ps.setInt(1, packId);
-                ps.setInt(2, map.getKey());
-                ps.setInt(3, map.getValue());
-                int execute = ps.executeUpdate();
-                if (execute == 1) {
-                    con.close();
-                }
-            } catch (SQLException ex) {
-                Logger.getLogger(MaestrosForm.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        });
-    }
-
-    /*private String getFieldRRSS() {
-        return TxtNomRRSS.getText().toUpperCase().trim().replaceAll("( )+", " ");
-    }*/
-    private int insertPack() {
-        try {
-            int id = 0;
-            con = ConnectionMysql.getConnection();
-            ps = con.prepareStatement("INSERT INTO dreamgifts.pack (PCK_NOMBRE, PCK_COSTO, PCK_STOCK, PCK_ESTADO) VALUES(?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);
-            ps.setString(1, getFieldValue(txtNombrePack));
-            ps.setString(2, txtPrecioPack.getText());
-            ps.setInt(3, 0);
-            ps.setInt(4, 1);
-            ps.executeUpdate();
-            rs = ps.getGeneratedKeys();
-            if (rs.next()) {
-                id = rs.getInt(1);
-            }
-            rs.close();
-            con.close();
-            return id;
-        } catch (SQLException ex) {
-            Logger.getLogger(MaestrosForm.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        return 0;
-    }
-
-    private void cleanArticleForm() {
-        txtNombrePack.setText(EMPTY);
-        txtPrecioPack.setText(EMPTY);
-        txtCantArtPack.setText(EMPTY);
-        idsAndQuantities.clear();
-        modelPackHas.removeAllElements();
-        jListPckHas.setModel(modelPackHas);
-    }
-    private static final String EMPTY = "";
 
     private void txtBuscarComunaKeyTyped(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtBuscarComunaKeyTyped
         try {
@@ -1221,10 +1467,6 @@ public class MaestrosForm extends javax.swing.JInternalFrame {
             Logger.getLogger(MaestrosForm.class.getName()).log(Level.SEVERE, null, ex);
         }
     }//GEN-LAST:event_txtBuscarComunaKeyTyped
-
-    private void txtBuscarComunaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtBuscarComunaActionPerformed
-
-    }//GEN-LAST:event_txtBuscarComunaActionPerformed
 
     private void BtnDesactivarComunaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_BtnDesactivarComunaActionPerformed
         try {
@@ -1388,66 +1630,290 @@ public class MaestrosForm extends javax.swing.JInternalFrame {
         }*/
     }//GEN-LAST:event_TxtNomRRSSKeyTyped
 
-    private void BtnUserEditarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_BtnUserEditarActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_BtnUserEditarActionPerformed
-
-    private void jListPckHasMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jListPckHasMouseClicked
-        btnQuitarArtPack.setEnabled(true);
-        btnAgregarArtPack.setEnabled(false);
-    }//GEN-LAST:event_jListPckHasMouseClicked
-
-    private void btnQuitarArtPackActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnQuitarArtPackActionPerformed
-
-    }//GEN-LAST:event_btnQuitarArtPackActionPerformed
-
-    private void GrillaPacksMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_GrillaPacksMouseReleased
-                int id = GrillaPacks.getSelectedRow();
-        int packId = Integer.parseInt(GrillaPacks.getValueAt(id, 0).toString());
-        String namePack = GrillaPacks.getValueAt(id, 1).toString();
-        String price = GrillaPacks.getValueAt(id, 2).toString();
-        if (evt.getClickCount() == 1 && GrillaPacks.getSelectedRow() != -1) {
-            boolean status = (boolean) GrillaPacks.getValueAt(id, 4);
-            txtBuscarPack.setText(EMPTY);
-            txtNombrePack.setText(namePack);
-            txtPrecioPack.setText(price);
-            btnDesactPack.setVisible(true);
-            btnDesactPack.setText(getActivateDeactivateName(status));
-            btnDesactPack.setEnabled(true);
-            btnEditarPack.setEnabled(false);
-            btnCrearPack.setEnabled(false);
-            getHasPack(packId);
-        }
-
-        if (evt.getClickCount() == 2 && GrillaPacks.getSelectedRow() != -1) {
-            int dialogResult = JOptionPane.showConfirmDialog(null, """
-                                                                   Los artículos asociados al pack serán eliminados
-                                                                   ¿Desea editar el registro seleccionado?""",
-                    "Warning", JOptionPane.YES_NO_OPTION);
-            if (dialogResult == JOptionPane.YES_OPTION) {
-
-                deletePackHas();
-                getHasPack(packId);
-                txtBuscarPack.setText(EMPTY);
-                txtNombrePack.setText(namePack);
-                txtPrecioPack.setText(price);
-                btnDesactPack.setVisible(false);
-                btnEditarPack.setEnabled(true);
-                btnCrearPack.setEnabled(false);
+    private void btnBuscaInfoVentPacksActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBuscaInfoVentPacksActionPerformed
+        try {
+            int cantTotalPack = 0;
+            double precTotalPack = 0;
+            Date fDesde = jDateInfoVentDesde.getDate();
+            Date fHasta = jDateInfoVentHasta.getDate();
+            String fechaDesde = DateFormat.getDateInstance().format(fDesde);
+            String fechaHasta = DateFormat.getDateInstance().format(fHasta);
+            fechaDesde = ParseFecha(fechaDesde);
+            fechaHasta = ParseFecha(fechaHasta);
+            DefaultTableModel model = (DefaultTableModel) GrillaInfoVentaPacks.getModel();
+            model.setRowCount(0);
+            con = ConnectionMysql.getConnection();
+            /*System.out.println("SELECT pack.PCK_NOMBRE AS Nombre, pack.PCK_STOCK AS Stock, pack.PCK_COSTO As Precio\n"
+                                      + "FROM dreamgifts.venta\n"
+                                      + "JOIN dreamgifts.pack\n" 
+                                      + "ON venta.PCK_ID_PACK = pack.PCK_ID_PACK\n"
+                                      + "WHERE venta.PCK_ID_PACK BETWEEN (venta.vta_fecha_venta >= '"+ fechaDesde +"') AND venta.vta_fecha_venta <= '"+ fechaHasta +"'\n"
+                                      + "GROUP BY pack.PCK_NOMBRE ASC");*/
+            ps = con.prepareStatement("SELECT pack.PCK_NOMBRE AS Nombre, pack.PCK_STOCK AS Stock, pack.PCK_COSTO As Precio\n"
+                    + "FROM dreamgifts.venta\n"
+                    + "JOIN dreamgifts.pack\n"
+                    + "ON venta.PCK_ID_PACK = pack.PCK_ID_PACK\n"
+                    + "WHERE venta.vta_fecha_venta between '" + fechaDesde + "' AND '" + fechaHasta + "'\n"
+                    + "GROUP BY pack.PCK_NOMBRE ASC");
+            rs = ps.executeQuery();
+            while (rs.next()) {
+                Object[] row = new Object[]{rs.getString(1), rs.getInt(2), rs.getDouble(3)};
+                model.addRow(row);
             }
+            GrillaInfoVentaPacks.setModel(model);
+            //con.close();
+            ps = con.prepareStatement("SELECT sum(PCK_STOCK), sum(PCK_COSTO)\n"
+                    + "FROM dreamgifts.venta\n"
+                    + "JOIN dreamgifts.pack \n"
+                    + "ON venta.PCK_ID_PACK = pack.PCK_ID_PACK\n"
+                    + "WHERE venta.vta_fecha_venta between '" + fechaDesde + "' AND '" + fechaHasta + "'\n"
+                    + "order by pack.PCK_NOMBRE ASC");
+            rs = ps.executeQuery();
+            while (rs.next()) {
+                Object[] row = new Object[]{rs.getInt(1), rs.getDouble(2)};
+                cantTotalPack = rs.getInt(1);
+                precTotalPack = rs.getDouble(2);
+            }
+            txtCantTotalPacks.setText(String.valueOf(cantTotalPack));
+            txtValorTotalPacks.setText(String.valueOf(precTotalPack));
+            con.close();
+        } catch (SQLException ex) {
+            Logger.getLogger(MaestrosForm.class.getName()).log(Level.SEVERE, null, ex);
         }
-    }//GEN-LAST:event_GrillaPacksMouseReleased
+    }//GEN-LAST:event_btnBuscaInfoVentPacksActionPerformed
 
-    private void deletePackHas() throws NumberFormatException, HeadlessException {
+    public static String ParseFecha(String FechaIngresada) {
+        String[] fecha = FechaIngresada.split("-");
+        String dia = fecha[2];
+        String mes = fecha[1];
+        String anio = fecha[0];
+        String Nuevafecha = dia + "-" + mes + "-" + anio;
+        return Nuevafecha;
+    }
+
+    public String getFecha(JDateChooser jdc) {
+        if (jdc.getDate() != null) {
+            return df.format(jdc.getDate());
+        } else {
+            return null;
+        }
+        /*String[] fecha = FechaIngresada.split("-");
+        String dia = fecha[2]; 
+        String mes = fecha[1];
+        String anio = fecha[0];
+        String Nuevafecha = dia+"-"+mes+"-"+anio;
+        return Nuevafecha;*/
+    }
+
+    public java.util.Date StringADate(String fechaString) {
+        Date fechaD = null;
+        try {
+            fechaD = df.parse(fechaString);
+            return fechaD;
+        } catch (ParseException ex) {
+            Logger.getLogger(MaestrosForm.class.getName()).log(Level.SEVERE, null, ex);
+            return null;
+        }
+    }
+
+    private void totalesCantidadPrecio() {
+        try {
+            int cantTotalPack = 0;
+            double precTotalPack = 0;
+            DefaultTableModel model = (DefaultTableModel) GrillaInfoVentaPacks.getModel();
+            model.setRowCount(0);
+            con = ConnectionMysql.getConnection();
+            ps = con.prepareStatement("SELECT sum(PCK_STOCK), sum(PCK_COSTO)\n"
+                    + "FROM dreamgifts.venta\n"
+                    + "JOIN dreamgifts.pack \n"
+                    + "ON venta.PCK_ID_PACK = pack.PCK_ID_PACK\n"
+                    + "WHERE venta.PCK_ID_PACK BETWEEN (venta.vta_fecha_venta >= '2020-01-01') AND venta.vta_fecha_venta <= '2022-12-31'\n"
+                    + "order by pack.PCK_NOMBRE ASC");
+
+            rs = ps.executeQuery();
+            while (rs.next()) {
+                Object[] row = new Object[]{rs.getInt(1), rs.getDouble(2)};
+                model.addRow(row);
+                cantTotalPack = rs.getInt(1);
+                precTotalPack = rs.getDouble(2);
+            }
+            txtCantTotalPacks.setText(String.valueOf(cantTotalPack));
+            txtValorTotalPacks.setText(String.valueOf(precTotalPack));
+            GrillaInfoVentaPacks.setModel(model);
+            con.close();
+        } catch (SQLException ex) {
+            Logger.getLogger(MaestrosForm.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public ResultSet getTotalesCantPrec() {
+        ResultSet rs = null;
+        try {
+            ps = con.prepareStatement("SELECT sum(PCK_STOCK), sum(PCK_COSTO)\n"
+                    + "FROM dreamgifts.venta\n"
+                    + "JOIN dreamgifts.pack \n"
+                    + "ON venta.PCK_ID_PACK = pack.PCK_ID_PACK\n"
+                    + "WHERE venta.PCK_ID_PACK BETWEEN (venta.vta_fecha_venta >= '2020-01-01') AND venta.vta_fecha_venta <= '2022-12-31'\n"
+                    + "order by pack.PCK_NOMBRE ASC");
+            rs = ps.executeQuery();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+        return rs;
+    }
+
+    private void GrillaInfoVentaPacksMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_GrillaInfoVentaPacksMouseClicked
+        // TODO add your handling code here:
+    }//GEN-LAST:event_GrillaInfoVentaPacksMouseClicked
+
+    private void txtCantTotalPacksKeyTyped(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtCantTotalPacksKeyTyped
+        // TODO add your handling code here:
+    }//GEN-LAST:event_txtCantTotalPacksKeyTyped
+
+    private void txtValorTotalPacksKeyTyped(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtValorTotalPacksKeyTyped
+        // TODO add your handling code here:
+    }//GEN-LAST:event_txtValorTotalPacksKeyTyped
+
+    private void jDateInfoVentDesdeKeyTyped(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_jDateInfoVentDesdeKeyTyped
+        // TODO add your handling code here:
+    }//GEN-LAST:event_jDateInfoVentDesdeKeyTyped
+
+    private void txtCantTotalPacksActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtCantTotalPacksActionPerformed
+
+    }//GEN-LAST:event_txtCantTotalPacksActionPerformed
+
+    private void btnExpImpVentPackActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnExpImpVentPackActionPerformed
+        try {
+            HSSFWorkbook fWorkbook = new HSSFWorkbook();
+            HSSFSheet fSheet;
+            fSheet = fWorkbook.createSheet("Hoja1");
+            HSSFFont sheetTitleFont = fWorkbook.createFont();
+            File file = new File(RUTA_EXCEL);
+
+            HSSFCellStyle cellStyle = fWorkbook.createCellStyle();
+            TableModel model = GrillaInfoVentaPacks.getModel();
+
+            TableColumnModel model1 = GrillaInfoVentaPacks.getTableHeader().getColumnModel();
+            HSSFRow fRow1 = fSheet.createRow((short) 0);
+            for (int i = 0; i < model1.getColumnCount(); i++) {
+                HSSFCell cell = fRow1.createCell((short) i);
+                cell.setCellValue(model1.getColumn(i).getHeaderValue().toString()); //agrega la cabecera de la tabla, n° pedido, cliente, pack,etc
+            }
+            //escribe datos de la grilla a la hoja de excel
+            for (int i = 0; i < model.getRowCount(); i++) {
+                HSSFRow fRow = fSheet.createRow((short) i + 1);
+                for (int j = 0; j < model.getColumnCount(); j++) {
+                    HSSFCell cell = fRow.createCell((short) j);
+                    cell.setCellValue(model.getValueAt(i, j).toString());
+                    cell.setCellStyle(cellStyle);
+                }
+            }
+            FileOutputStream fileOutputStream;
+            fileOutputStream = new FileOutputStream(file);
+            try ( BufferedOutputStream bos = new BufferedOutputStream(fileOutputStream)) {
+                fWorkbook.write(bos);
+                JOptionPane.showMessageDialog(null, "Archivo guardado en " + RUTA_EXCEL);
+            }
+            fileOutputStream.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }//GEN-LAST:event_btnExpImpVentPackActionPerformed
+
+    private boolean agregaArtPack() throws HeadlessException {
+        if (idsAndQuantities.isEmpty()) {
+            JOptionPane.showMessageDialog(null, "Debe agregar artículos al pack");
+            return true;
+        }
+        return false;
+    }
+
+    private void insertHasPackEdit(int artId, int packId) {
         try {
             con = ConnectionMysql.getConnection();
-            int id = GrillaPacks.getSelectedRow();
-            int idHasPack = Integer.parseInt(GrillaPacks.getValueAt(id, 0).toString());
-            ps = con.prepareStatement("DELETE FROM dreamgifts.pack_has_articulo WHERE PCK_ID_PACK = ?");
-            ps.setInt(1, idHasPack);
+            ps = con.prepareStatement("INSERT INTO dreamgifts.pack_has_articulo (PCK_ID_PACK, ART_ID_ARTICULO, CANTIDAD) VALUES (?, ?, ?)");
+            ps.setInt(1, artId);
+            ps.setInt(2, packId);
+            ps.setInt(3, 0);
+            int execute = ps.executeUpdate();
+            if (execute == 1) {
+                con.close();
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(MaestrosForm.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    private void insertHasPack(int packId) {
+        idsAndQuantities.entrySet().forEach(map -> {
+            try {
+                con = ConnectionMysql.getConnection();
+                ps = con.prepareStatement("INSERT INTO dreamgifts.pack_has_articulo (PCK_ID_PACK, ART_ID_ARTICULO, CANTIDAD) VALUES (?, ?, ?)");
+                ps.setInt(1, packId);
+                ps.setInt(2, map.getKey());
+                ps.setInt(3, map.getValue());
+                int execute = ps.executeUpdate();
+                if (execute == 1) {
+                    con.close();
+                }
+            } catch (SQLException ex) {
+                Logger.getLogger(MaestrosForm.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        });
+    }
+
+    /*private String getFieldRRSS() {
+        return TxtNomRRSS.getText().toUpperCase().trim().replaceAll("( )+", " ");
+    }*/
+    private int insertPack() {
+        try {
+            int id = 0;
+            con = ConnectionMysql.getConnection();
+            ps = con.prepareStatement("INSERT INTO dreamgifts.pack (PCK_NOMBRE, PCK_COSTO, PCK_STOCK, PCK_ESTADO) VALUES(?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);
+            ps.setString(1, getFieldValue(txtNombrePack));
+            ps.setString(2, txtPrecioPack.getText());
+            ps.setInt(3, 0);
+            ps.setInt(4, 1);
+            ps.executeUpdate();
+            rs = ps.getGeneratedKeys();
+            if (rs.next()) {
+                id = rs.getInt(1);
+            }
+            rs.close();
+            con.close();
+            return id;
+        } catch (SQLException ex) {
+            Logger.getLogger(MaestrosForm.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return 0;
+    }
+
+    private void cleanArticleForm() {
+        txtNombrePack.setText(EMPTY);
+        txtPrecioPack.setText(EMPTY);
+        txtCantArtPack.setText(EMPTY);
+        idsAndQuantities.clear();
+        modelPackHas.removeAllElements();
+        jListPckHas.setModel(modelPackHas);
+    }
+    private static final String EMPTY = "";
+
+    public DefaultListModel quitarRowhasPack() {
+        DefaultListModel m = (DefaultListModel) jListPckHas.getModel();
+        m.remove(jListPckHas.getSelectedIndex());
+        return m;
+    }
+
+    private void deleteArtPackHas(int artId, int packId) {
+        try {
+            con = ConnectionMysql.getConnection();
+            ps = con.prepareStatement("DELETE FROM dreamgifts.pack_has_articulo WHERE PCK_ID_PACK = ? AND ART_ID_ARTICULO = ?");
+            ps.setInt(1, packId);
+            ps.setInt(2, artId);
             int execute = ps.executeUpdate();
             if (execute == 1) {
                 JOptionPane.showMessageDialog(null, "Los articulos fueron eliminados del pack seleccionado");
+                refreshTablePack();
             }
             con.close();
         } catch (HeadlessException | SQLException ex) {
@@ -1542,7 +2008,7 @@ public class MaestrosForm extends javax.swing.JInternalFrame {
 
     private void getPack() {
         try {
-            GrillaPacks.setToolTipText("Un click para ver la información del pack. Doble click para editar el pack");
+            //GrillaPacks.setToolTipText("Un click para ver la información del pack. Doble click para editar el pack");
             DefaultTableModel model = (DefaultTableModel) GrillaPacks.getModel();
             model.setRowCount(0);
             con = ConnectionMysql.getConnection();
@@ -1618,6 +2084,7 @@ public class MaestrosForm extends javax.swing.JInternalFrame {
     private javax.swing.JButton BtnUserEditar;
     private javax.swing.JButton BtnUserGuardar;
     private javax.swing.JTable GrillaComunas;
+    private javax.swing.JTable GrillaInfoVentaPacks;
     private javax.swing.JTable GrillaPacks;
     private javax.swing.JTable GrillaRRSS;
     private javax.swing.JTable GrillaUsuarios;
@@ -1627,19 +2094,28 @@ public class MaestrosForm extends javax.swing.JInternalFrame {
     private javax.swing.JTextField TxtNomUsuario;
     private javax.swing.JTextField TxtRepClave;
     private javax.swing.JButton btnAgregarArtPack;
+    private javax.swing.JButton btnBuscaInfoVentPacks;
     private javax.swing.JButton btnCancelarComuna;
     private javax.swing.JButton btnCrearPack;
     private javax.swing.JButton btnDesactPack;
     private javax.swing.JButton btnEditarPack;
+    private javax.swing.JButton btnExpImpVentPack;
     private javax.swing.JButton btnGuardarComuna;
     private javax.swing.JButton btnQuitarArtPack;
+    private com.toedter.calendar.JDateChooser jDateInfoVentDesde;
+    private com.toedter.calendar.JDateChooser jDateInfoVentHasta;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
     private javax.swing.JLabel jLabel12;
     private javax.swing.JLabel jLabel13;
+    private javax.swing.JLabel jLabel14;
     private javax.swing.JLabel jLabel15;
     private javax.swing.JLabel jLabel16;
+    private javax.swing.JLabel jLabel17;
+    private javax.swing.JLabel jLabel18;
+    private javax.swing.JLabel jLabel19;
+    private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel22;
     private javax.swing.JLabel jLabel23;
     private javax.swing.JLabel jLabel24;
@@ -1653,6 +2129,7 @@ public class MaestrosForm extends javax.swing.JInternalFrame {
     private javax.swing.JList<String> jListPckArt;
     private javax.swing.JList<String> jListPckHas;
     private javax.swing.JPanel jPanel1;
+    private javax.swing.JPanel jPanel10;
     private javax.swing.JPanel jPanel11;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
@@ -1661,11 +2138,13 @@ public class MaestrosForm extends javax.swing.JInternalFrame {
     private javax.swing.JPanel jPanel6;
     private javax.swing.JPanel jPanel7;
     private javax.swing.JPanel jPanel8;
+    private javax.swing.JPanel jPanel9;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane10;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JScrollPane jScrollPane4;
+    private javax.swing.JScrollPane jScrollPane5;
     private javax.swing.JScrollPane jScrollPane8;
     private javax.swing.JScrollPane jScrollPane9;
     private javax.swing.JTabbedPane jTabbedPane1;
@@ -1675,9 +2154,11 @@ public class MaestrosForm extends javax.swing.JInternalFrame {
     private javax.swing.JTextField txtBuscarComuna;
     private javax.swing.JTextField txtBuscarPack;
     private javax.swing.JTextField txtCantArtPack;
+    private javax.swing.JTextField txtCantTotalPacks;
     private javax.swing.JTextField txtNomComuna;
     private javax.swing.JTextField txtNombrePack;
     private javax.swing.JTextField txtPrecioPack;
+    private javax.swing.JTextField txtValorTotalPacks;
     // End of variables declaration//GEN-END:variables
 
 }
