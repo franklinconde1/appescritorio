@@ -899,6 +899,7 @@ public class MaestrosForm extends javax.swing.JInternalFrame {
         jPanel11Layout.setVerticalGroup(
             jPanel11Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel11Layout.createSequentialGroup()
+<<<<<<< Updated upstream
                 .addGap(19, 19, 19)
                 .addGroup(jPanel11Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel11Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
@@ -908,6 +909,14 @@ public class MaestrosForm extends javax.swing.JInternalFrame {
                         .addComponent(jLabel16)
                         .addComponent(txtPrecioPack, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addGap(28, 28, 28)
+=======
+                .addGap(8, 8, 8)
+                .addGroup(jPanel11Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel15)
+                    .addComponent(txtNombrePack, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel16)
+                    .addComponent(txtPrecioPack, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+>>>>>>> Stashed changes
                 .addGroup(jPanel11Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel11Layout.createSequentialGroup()
                         .addComponent(btnAgregarArtPack)
@@ -1224,8 +1233,8 @@ public class MaestrosForm extends javax.swing.JInternalFrame {
                 txtPrecioPack.setText(EMPTY);
                 btnEditarPack.setEnabled(false);
                 btnDesactPack.setVisible(false);
-                refreshTablePack();
                 cleanArticleForm();
+                refreshTablePack();
             }
         } catch (SQLException ex) {
             Logger.getLogger(MaestrosForm.class.getName()).log(Level.SEVERE, null, ex);
@@ -1233,17 +1242,37 @@ public class MaestrosForm extends javax.swing.JInternalFrame {
         }
     }//GEN-LAST:event_btnEditarPackActionPerformed
 
+<<<<<<< Updated upstream
     private void GrillaPacksMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_GrillaPacksMouseReleased
+=======
+    private void GrillaPacks(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_GrillaPacks
+>>>>>>> Stashed changes
         int id = GrillaPacks.getSelectedRow();
         int packId = Integer.parseInt(GrillaPacks.getValueAt(id, 0).toString());
         String namePack = GrillaPacks.getValueAt(id, 1).toString();
         String price = GrillaPacks.getValueAt(id, 2).toString();
         if (evt.getClickCount() == 1 && GrillaPacks.getSelectedRow() != -1) {
             boolean status = (boolean) GrillaPacks.getValueAt(id, 4);
+<<<<<<< Updated upstream
+=======
+            txtBuscarPack.setText(EMPTY);
+            txtNombrePack.setText(namePack);
+            txtPrecioPack.setText(price);
+            btnDesactPack.setVisible(true);
+            btnDesactPack.setText(getActivateDeactivateName(status));
+            btnDesactPack.setEnabled(true);
+            btnEditarPack.setEnabled(false);
+            btnCrearPack.setEnabled(false);
+            getHasPack(packId);
+        }
+
+        if (evt.getClickCount() == 2 && GrillaPacks.getSelectedRow() != -1) {
+>>>>>>> Stashed changes
             int dialogResult = JOptionPane.showConfirmDialog(null, """
                 ¿Desea editar el pack seleccionado?""",
                     "Warning", JOptionPane.YES_NO_OPTION);
             if (dialogResult == JOptionPane.YES_OPTION) {
+<<<<<<< Updated upstream
                 txtBuscarPack.setText(EMPTY);
                 txtNombrePack.setText(namePack);
                 txtPrecioPack.setText(price);
@@ -1303,6 +1332,11 @@ public class MaestrosForm extends javax.swing.JInternalFrame {
                 ¿Desea editar el pack seleccionado?""",
                     "Warning", JOptionPane.YES_NO_OPTION);
             if (dialogResult == JOptionPane.YES_OPTION) {
+=======
+
+                deletePackHas();
+                getHasPack(packId);
+>>>>>>> Stashed changes
                 txtBuscarPack.setText(EMPTY);
                 txtNombrePack.setText(namePack);
                 txtPrecioPack.setText(price);
@@ -1449,6 +1483,71 @@ public class MaestrosForm extends javax.swing.JInternalFrame {
         refreshTablePack();
     }//GEN-LAST:event_btnCrearPackActionPerformed
 
+<<<<<<< Updated upstream
+=======
+    private boolean agregaArtPack() throws HeadlessException {
+        if (idsAndQuantities.isEmpty()) {
+            JOptionPane.showMessageDialog(null, "Debe agregar artículos al pack");
+            return true;
+        }
+        return false;
+    }
+
+    private void insertHasPack(int packId) {
+        idsAndQuantities.entrySet().forEach(map -> {
+            try {
+                con = ConnectionMysql.getConnection();
+                ps = con.prepareStatement("INSERT INTO dreamgifts.pack_has_articulo (PCK_ID_PACK, ART_ID_ARTICULO, CANTIDAD) VALUES (?, ?, ?)");
+                ps.setInt(1, packId);
+                ps.setInt(2, map.getKey());
+                ps.setInt(3, map.getValue());
+                int execute = ps.executeUpdate();
+                if (execute == 1) {
+                    con.close();
+                }
+            } catch (SQLException ex) {
+                Logger.getLogger(MaestrosForm.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        });
+    }
+
+    /*private String getFieldRRSS() {
+        return TxtNomRRSS.getText().toUpperCase().trim().replaceAll("( )+", " ");
+    }*/
+    private int insertPack() {
+        try {
+            int id = 0;
+            con = ConnectionMysql.getConnection();
+            ps = con.prepareStatement("INSERT INTO dreamgifts.pack (PCK_NOMBRE, PCK_COSTO, PCK_STOCK, PCK_ESTADO) VALUES(?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);
+            ps.setString(1, getFieldValue(txtNombrePack));
+            ps.setString(2, txtPrecioPack.getText());
+            ps.setInt(3, 0);
+            ps.setInt(4, 1);
+            ps.executeUpdate();
+            rs = ps.getGeneratedKeys();
+            if (rs.next()) {
+                id = rs.getInt(1);
+            }
+            rs.close();
+            con.close();
+            return id;
+        } catch (SQLException ex) {
+            Logger.getLogger(MaestrosForm.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return 0;
+    }
+
+    private void cleanArticleForm() {
+        txtNombrePack.setText(EMPTY);
+        txtPrecioPack.setText(EMPTY);
+        txtCantArtPack.setText(EMPTY);
+        idsAndQuantities.clear();
+        modelPackHas.removeAllElements();
+        jListPckHas.setModel(modelPackHas);
+    }
+    private static final String EMPTY = "";
+
+>>>>>>> Stashed changes
     private void txtBuscarComunaKeyTyped(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtBuscarComunaKeyTyped
         try {
             final String text = txtBuscarComuna.getText();
@@ -1904,7 +2003,48 @@ public class MaestrosForm extends javax.swing.JInternalFrame {
         return m;
     }
 
+<<<<<<< Updated upstream
     private void deleteArtPackHas(int artId, int packId) {
+=======
+    private void GrillaPacksMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_GrillaPacksMouseReleased
+                int id = GrillaPacks.getSelectedRow();
+        int packId = Integer.parseInt(GrillaPacks.getValueAt(id, 0).toString());
+        String namePack = GrillaPacks.getValueAt(id, 1).toString();
+        String price = GrillaPacks.getValueAt(id, 2).toString();
+        if (evt.getClickCount() == 1 && GrillaPacks.getSelectedRow() != -1) {
+            boolean status = (boolean) GrillaPacks.getValueAt(id, 4);
+            txtBuscarPack.setText(EMPTY);
+            txtNombrePack.setText(namePack);
+            txtPrecioPack.setText(price);
+            btnDesactPack.setVisible(true);
+            btnDesactPack.setText(getActivateDeactivateName(status));
+            btnDesactPack.setEnabled(true);
+            btnEditarPack.setEnabled(false);
+            btnCrearPack.setEnabled(false);
+            getHasPack(packId);
+        }
+
+        if (evt.getClickCount() == 2 && GrillaPacks.getSelectedRow() != -1) {
+            int dialogResult = JOptionPane.showConfirmDialog(null, """
+                                                                   Los artículos asociados al pack serán eliminados
+                                                                   ¿Desea editar el registro seleccionado?""",
+                    "Warning", JOptionPane.YES_NO_OPTION);
+            if (dialogResult == JOptionPane.YES_OPTION) {
+
+                deletePackHas();
+                getHasPack(packId);
+                txtBuscarPack.setText(EMPTY);
+                txtNombrePack.setText(namePack);
+                txtPrecioPack.setText(price);
+                btnDesactPack.setVisible(false);
+                btnEditarPack.setEnabled(true);
+                btnCrearPack.setEnabled(false);
+            }
+        }
+    }//GEN-LAST:event_GrillaPacksMouseReleased
+
+    private void deletePackHas() throws NumberFormatException, HeadlessException {
+>>>>>>> Stashed changes
         try {
             con = ConnectionMysql.getConnection();
             ps = con.prepareStatement("DELETE FROM dreamgifts.pack_has_articulo WHERE PCK_ID_PACK = ? AND ART_ID_ARTICULO = ?");
@@ -2008,7 +2148,11 @@ public class MaestrosForm extends javax.swing.JInternalFrame {
 
     private void getPack() {
         try {
+<<<<<<< Updated upstream
             //GrillaPacks.setToolTipText("Un click para ver la información del pack. Doble click para editar el pack");
+=======
+            GrillaPacks.setToolTipText("Un click para ver la información del pack. Doble click para editar el pack");
+>>>>>>> Stashed changes
             DefaultTableModel model = (DefaultTableModel) GrillaPacks.getModel();
             model.setRowCount(0);
             con = ConnectionMysql.getConnection();
